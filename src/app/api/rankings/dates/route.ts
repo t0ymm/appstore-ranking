@@ -7,23 +7,28 @@ interface SnapshotDate {
 }
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const type = (searchParams.get("type") || "free") as RankingType;
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const type = (searchParams.get("type") || "free") as RankingType;
 
-  const supabase = createServerClient();
+    const supabase = createServerClient();
 
-  const { data, error } = await supabase
-    .from("ranking_snapshots")
-    .select("fetch_date")
-    .eq("ranking_type", type)
-    .order("fetch_date", { ascending: false })
-    .returns<SnapshotDate[]>();
+    const { data, error } = await supabase
+      .from("ranking_snapshots")
+      .select("fetch_date")
+      .eq("ranking_type", type)
+      .order("fetch_date", { ascending: false })
+      .returns<SnapshotDate[]>();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const dates = data?.map((d) => d.fetch_date) || [];
+
+    return NextResponse.json({ dates });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message, dates: [] }, { status: 500 });
   }
-
-  const dates = data?.map((d) => d.fetch_date) || [];
-
-  return NextResponse.json({ dates });
 }
