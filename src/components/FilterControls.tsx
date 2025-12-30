@@ -33,9 +33,9 @@ export function FilterControls({
   onDateChange,
 }: FilterControlsProps) {
   return (
-    <div className="space-y-3 mb-6 w-full max-w-full">
+    <div className="space-y-3 mb-6 w-full overflow-hidden">
       {/* 1行目: 無料/有料 + 日付 */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 w-full overflow-hidden">
         <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0">
           <button
             onClick={() => onTypeChange("free")}
@@ -80,7 +80,7 @@ export function FilterControls({
       <select
         value={category}
         onChange={(e) => onCategoryChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+        className="w-full max-w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm box-border"
       >
         <option value="">全カテゴリ</option>
         {Object.entries(CATEGORIES).map(([id, name]) => (
@@ -91,11 +91,11 @@ export function FilterControls({
       </select>
 
       {/* 3行目: 配信者 + 並び替え */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 w-full overflow-hidden">
         <select
           value={developerType}
           onChange={(e) => onDeveloperTypeChange(e.target.value as DeveloperType)}
-          className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+          className="flex-1 min-w-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
           <option value="all">配信者: 全て</option>
           <option value="company">配信者: 企業</option>
@@ -108,7 +108,7 @@ export function FilterControls({
             const [field, order] = e.target.value.split("-") as [SortField, SortOrder];
             onSortChange(field, order);
           }}
-          className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+          className="flex-1 min-w-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
           <option value="rank-asc">順位↑</option>
           <option value="rank-desc">順位↓</option>

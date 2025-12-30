@@ -108,7 +108,7 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col w-full max-w-full overflow-x-hidden">
       <header className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-2 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center">
@@ -123,7 +123,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 overflow-x-hidden">
+      <main className="w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 overflow-hidden box-border">
         {error && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
             {error}
