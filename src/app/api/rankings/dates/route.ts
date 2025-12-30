@@ -24,9 +24,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const dates = data?.map((d) => d.fetch_date) || [];
+    const uniqueDates = [...new Set(data?.map((d) => d.fetch_date) || [])];
 
-    return NextResponse.json({ dates });
+    return NextResponse.json({ dates: uniqueDates });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message, dates: [] }, { status: 500 });
