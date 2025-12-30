@@ -4,8 +4,22 @@ import { createServerClient } from "@/lib/supabase/client";
 
 const RSS_BASE_URL = "https://rss.marketingtools.apple.com/api/v2/jp/apps";
 const ITUNES_LOOKUP_URL = "https://itunes.apple.com/lookup";
-const RANKING_LIMIT = 200;
+const RANKING_LIMIT = 100;
 const BATCH_SIZE = 100;
+
+// 取得するカテゴリ一覧
+const CATEGORIES_TO_FETCH = [
+  { id: null, name: "総合" },
+  { id: "6014", name: "ゲーム" },
+  { id: "6016", name: "エンターテインメント" },
+  { id: "6005", name: "ソーシャルネットワーキング" },
+  { id: "6008", name: "写真/ビデオ" },
+  { id: "6002", name: "ユーティリティ" },
+  { id: "6012", name: "ライフスタイル" },
+  { id: "6015", name: "ファイナンス" },
+  { id: "6024", name: "ショッピング" },
+  { id: "6017", name: "教育" },
+];
 
 interface SnapshotId {
   id: string;
@@ -15,12 +29,16 @@ interface SnapshotRow {
   id: string;
   fetch_date: string;
   ranking_type: string;
+  category_id: string | null;
   created_at: string;
 }
 
-export async function fetchRankingFromRss(type: RankingType): Promise<RssFeedApp[]> {
+export async function fetchRankingFromRss(type: RankingType, categoryId: string | null): Promise<RssFeedApp[]> {
   const rankingType = type === "free" ? "top-free" : "top-paid";
-  const url = `${RSS_BASE_URL}/${rankingType}/${RANKING_LIMIT}/apps.json`;
+  let url = `${RSS_BASE_URL}/${rankingType}/${RANKING_LIMIT}/apps.json`;
+  if (categoryId) {
+    url += `?genreId=${categoryId}`;
+  }
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -62,14 +80,21 @@ export async function fetchAppDetails(appIds: string[]): Promise<Map<string, iTu
   return appDetailsMap;
 }
 
-export async function fetchAndSaveRankings(type: RankingType, date: string): Promise<void> {
+export async function fetchAndSaveRankings(
+  type: RankingType,
+  date: string,
+  categoryId: string | null,
+  categoryName: string
+): Promise<number> {
   const supabase = createServerClient();
 
+  // 既存のスナップショットを削除
   const { data: existingSnapshots } = await supabase
     .from("ranking_snapshots")
     .select("id")
     .eq("fetch_date", date)
     .eq("ranking_type", type)
+    .eq("category_id", categoryId)
     .returns<SnapshotId[]>();
 
   if (existingSnapshots && existingSnapshots.length > 0) {
@@ -84,7 +109,7 @@ export async function fetchAndSaveRankings(type: RankingType, date: string): Pro
       .eq("id", existingSnapshot.id);
   }
 
-  const rssApps = await fetchRankingFromRss(type);
+  const rssApps = await fetchRankingFromRss(type, categoryId);
   const appIds = rssApps.map((app) => app.id);
   const appDetails = await fetchAppDetails(appIds);
 
@@ -93,6 +118,8 @@ export async function fetchAndSaveRankings(type: RankingType, date: string): Pro
     .insert({
       fetch_date: date,
       ranking_type: type,
+      category_id: categoryId,
+      category_name: categoryName,
     })
     .select()
     .returns<SnapshotRow[]>();
@@ -137,9 +164,32 @@ export async function fetchAndSaveRankings(type: RankingType, date: string): Pro
   if (entriesError) {
     throw new Error(`Failed to insert entries: ${entriesError.message}`);
   }
+
+  return entries.length;
 }
 
-export async function fetchAllRankings(date: string): Promise<void> {
-  await fetchAndSaveRankings("free", date);
-  await fetchAndSaveRankings("paid", date);
+export async function fetchAllRankings(date: string): Promise<{ total: number; categories: number }> {
+  let total = 0;
+  let categories = 0;
+
+  for (const category of CATEGORIES_TO_FETCH) {
+    try {
+      // 無料ランキング
+      const freeCount = await fetchAndSaveRankings("free", date, category.id, category.name);
+      total += freeCount;
+
+      // 有料ランキング
+      const paidCount = await fetchAndSaveRankings("paid", date, category.id, category.name);
+      total += paidCount;
+
+      categories++;
+
+      // レート制限対策
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error(`Error fetching category ${category.name}:`, error);
+    }
+  }
+
+  return { total, categories };
 }

@@ -20,6 +20,8 @@ interface RankingEntryWithSnapshot {
   ranking_snapshots: {
     fetch_date: string;
     ranking_type: string;
+    category_id: string | null;
+    category_name: string | null;
   };
 }
 
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const date = searchParams.get("date");
   const type = (searchParams.get("type") || "free") as RankingType;
-  const category = searchParams.get("category");
+  const category = searchParams.get("category"); // category_id でフィルタ
   const sortBy = (searchParams.get("sortBy") || "rank") as SortField;
   const sortOrder = (searchParams.get("sortOrder") || "asc") as SortOrder;
 
@@ -55,20 +57,26 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // カテゴリ指定がある場合はそのカテゴリのスナップショットから取得
+  // ない場合は総合（category_id IS NULL）から取得
   let query = supabase
     .from("ranking_entries")
     .select(`
       *,
       ranking_snapshots!inner(
         fetch_date,
-        ranking_type
+        ranking_type,
+        category_id,
+        category_name
       )
     `)
     .eq("ranking_snapshots.ranking_type", type)
     .eq("ranking_snapshots.fetch_date", targetDate);
 
   if (category) {
-    query = query.eq("primary_genre_id", category);
+    query = query.eq("ranking_snapshots.category_id", category);
+  } else {
+    query = query.is("ranking_snapshots.category_id", null);
   }
 
   const sortColumn = sortBy === "review_count" ? "review_count" : sortBy;
