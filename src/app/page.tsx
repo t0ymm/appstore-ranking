@@ -90,7 +90,7 @@ export default function Home() {
     } else {
       setIsLoading(false);
     }
-  }, [dates.length, fetchRankings]);
+  }, [dates.length, type, category, sortBy, sortOrder, date]);
 
   const handleSortChange = (newSortBy: SortField, newSortOrder: SortOrder) => {
     setSortBy(newSortBy);

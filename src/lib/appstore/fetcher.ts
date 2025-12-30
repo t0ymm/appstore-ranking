@@ -3,22 +3,37 @@ import type { RankingType, Genre } from "@/types";
 import { createServerClient } from "@/lib/supabase/client";
 
 const RSS_BASE_URL = "https://rss.marketingtools.apple.com/api/v2/jp/apps";
+const ITUNES_RSS_URL = "https://itunes.apple.com/jp/rss";
 const ITUNES_LOOKUP_URL = "https://itunes.apple.com/lookup";
 const RANKING_LIMIT = 100;
 const BATCH_SIZE = 100;
 
-// 取得するカテゴリ一覧
+// 取得するカテゴリ一覧（CATEGORIES と同期）
 const CATEGORIES_TO_FETCH = [
   { id: null, name: "総合" },
   { id: "6014", name: "ゲーム" },
   { id: "6016", name: "エンターテインメント" },
-  { id: "6005", name: "ソーシャルネットワーキング" },
   { id: "6008", name: "写真/ビデオ" },
-  { id: "6002", name: "ユーティリティ" },
+  { id: "6005", name: "ソーシャルネットワーキング" },
   { id: "6012", name: "ライフスタイル" },
-  { id: "6015", name: "ファイナンス" },
+  { id: "6011", name: "ミュージック" },
+  { id: "6002", name: "ユーティリティ" },
   { id: "6024", name: "ショッピング" },
   { id: "6017", name: "教育" },
+  { id: "6013", name: "ヘルスケア/フィットネス" },
+  { id: "6000", name: "ビジネス" },
+  { id: "6015", name: "ファイナンス" },
+  { id: "6003", name: "旅行" },
+  { id: "6023", name: "フード/ドリンク" },
+  { id: "6009", name: "ニュース" },
+  { id: "6007", name: "仕事効率化" },
+  { id: "6001", name: "天気" },
+  { id: "6004", name: "スポーツ" },
+  { id: "6006", name: "リファレンス" },
+  { id: "6010", name: "ナビゲーション" },
+  { id: "6020", name: "メディカル" },
+  { id: "6021", name: "マガジン/新聞" },
+  { id: "6018", name: "ブック" },
 ];
 
 interface SnapshotId {
@@ -33,12 +48,25 @@ interface SnapshotRow {
   created_at: string;
 }
 
-export async function fetchRankingFromRss(type: RankingType, categoryId: string | null): Promise<RssFeedApp[]> {
+interface iTunesRssEntry {
+  "im:name": { label: string };
+  "im:image": { label: string }[];
+  "im:artist": { label: string };
+  id: { attributes: { "im:id": string }; label: string };
+  "im:price"?: { attributes: { amount: string; currency: string } };
+  category?: { attributes: { "im:id": string; label: string } };
+}
+
+interface iTunesRssResponse {
+  feed: {
+    entry: iTunesRssEntry[];
+  };
+}
+
+// 総合ランキング用（新API）
+export async function fetchRankingFromNewRss(type: RankingType): Promise<RssFeedApp[]> {
   const rankingType = type === "free" ? "top-free" : "top-paid";
-  let url = `${RSS_BASE_URL}/${rankingType}/${RANKING_LIMIT}/apps.json`;
-  if (categoryId) {
-    url += `?genreId=${categoryId}`;
-  }
+  const url = `${RSS_BASE_URL}/${rankingType}/${RANKING_LIMIT}/apps.json`;
 
   const response = await fetch(url);
   if (!response.ok) {
@@ -47,6 +75,38 @@ export async function fetchRankingFromRss(type: RankingType, categoryId: string 
 
   const data: RssFeedResponse = await response.json();
   return data.feed.results;
+}
+
+// カテゴリ別ランキング用（旧iTunes RSS）
+export async function fetchRankingFromiTunesRss(type: RankingType, categoryId: string): Promise<RssFeedApp[]> {
+  const rankingType = type === "free" ? "topfreeapplications" : "toppaidapplications";
+  const url = `${ITUNES_RSS_URL}/${rankingType}/limit=${RANKING_LIMIT}/genre=${categoryId}/json`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch iTunes RSS: ${response.status}`);
+  }
+
+  const data: iTunesRssResponse = await response.json();
+
+  return data.feed.entry.map((entry) => ({
+    id: entry.id.attributes["im:id"],
+    name: entry["im:name"].label,
+    artistName: entry["im:artist"].label,
+    artworkUrl100: entry["im:image"][2]?.label || entry["im:image"][0]?.label || "",
+    url: entry.id.label,
+    releaseDate: "",
+    kind: "apps",
+    genres: [],
+  }));
+}
+
+export async function fetchRankingFromRss(type: RankingType, categoryId: string | null): Promise<RssFeedApp[]> {
+  if (categoryId) {
+    return fetchRankingFromiTunesRss(type, categoryId);
+  } else {
+    return fetchRankingFromNewRss(type);
+  }
 }
 
 export async function fetchAppDetails(appIds: string[]): Promise<Map<string, iTunesApp>> {
@@ -89,13 +149,19 @@ export async function fetchAndSaveRankings(
   const supabase = createServerClient();
 
   // 既存のスナップショットを削除
-  const { data: existingSnapshots } = await supabase
+  let existingQuery = supabase
     .from("ranking_snapshots")
     .select("id")
     .eq("fetch_date", date)
-    .eq("ranking_type", type)
-    .eq("category_id", categoryId)
-    .returns<SnapshotId[]>();
+    .eq("ranking_type", type);
+
+  if (categoryId) {
+    existingQuery = existingQuery.eq("category_id", categoryId);
+  } else {
+    existingQuery = existingQuery.is("category_id", null);
+  }
+
+  const { data: existingSnapshots } = await existingQuery.returns<SnapshotId[]>();
 
   if (existingSnapshots && existingSnapshots.length > 0) {
     const existingSnapshot = existingSnapshots[0];
