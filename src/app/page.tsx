@@ -1,64 +1,157 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { RankingTable } from "@/components/RankingTable";
+import { FilterControls } from "@/components/FilterControls";
+import type { RankingItem, RankingType, SortField, SortOrder } from "@/types";
 
 export default function Home() {
+  const [entries, setEntries] = useState<RankingItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+  const [type, setType] = useState<RankingType>("free");
+  const [category, setCategory] = useState("");
+  const [sortBy, setSortBy] = useState<SortField>("rank");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [date, setDate] = useState("");
+  const [dates, setDates] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDates = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/rankings/dates?type=${type}`);
+      const data = await res.json();
+      setDates(data.dates || []);
+      if (data.dates?.length > 0 && !date) {
+        setDate(data.dates[0]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch dates:", err);
+    }
+  }, [type, date]);
+
+  const fetchRankings = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        type,
+        sortBy,
+        sortOrder,
+        ...(date && { date }),
+        ...(category && { category }),
+      });
+      const res = await fetch(`/api/rankings?${params}`);
+      const data = await res.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      setEntries(data.entries || []);
+      if (data.date && !date) {
+        setDate(data.date);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "データの取得に失敗しました");
+      setEntries([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [type, category, sortBy, sortOrder, date]);
+
+  const handleFetchData = async () => {
+    setIsFetching(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/rankings/fetch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error);
+      }
+      await fetchDates();
+      await fetchRankings();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "データ取得に失敗しました");
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDates();
+  }, [fetchDates]);
+
+  useEffect(() => {
+    if (dates.length > 0) {
+      fetchRankings();
+    } else {
+      setIsLoading(false);
+    }
+  }, [dates.length, fetchRankings]);
+
+  const handleSortChange = (newSortBy: SortField, newSortOrder: SortOrder) => {
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              App Store ランキングチェッカー
+            </h1>
+            <button
+              onClick={handleFetchData}
+              disabled={isFetching}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            >
+              {isFetching ? (
+                <>
+                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                  取得中...
+                </>
+              ) : (
+                "データ取得"
+              )}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
+            {error}
+          </div>
+        )}
+
+        <FilterControls
+          type={type}
+          onTypeChange={setType}
+          category={category}
+          onCategoryChange={setCategory}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
+          date={date}
+          dates={dates}
+          onDateChange={setDate}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+          <RankingTable entries={entries} isLoading={isLoading} />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+
+        {!isLoading && entries.length > 0 && (
+          <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-right">
+            {entries.length} 件のアプリ
+          </div>
+        )}
       </main>
     </div>
   );
