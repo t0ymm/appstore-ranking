@@ -35,11 +35,11 @@ export function FilterControls({
   return (
     <div className="space-y-3 mb-6 w-full max-w-full">
       {/* 1行目: 無料/有料 + 日付 */}
-      <div className="flex gap-1">
+      <div className="flex gap-2">
         <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0">
           <button
             onClick={() => onTypeChange("free")}
-            className={`px-3 py-2 text-xs font-medium transition-colors ${
+            className={`px-3 py-2 text-sm font-medium transition-colors ${
               type === "free"
                 ? "bg-blue-600 text-white"
                 : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
@@ -49,7 +49,7 @@ export function FilterControls({
           </button>
           <button
             onClick={() => onTypeChange("paid")}
-            className={`px-3 py-2 text-xs font-medium transition-colors ${
+            className={`px-3 py-2 text-sm font-medium transition-colors ${
               type === "paid"
                 ? "bg-blue-600 text-white"
                 : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
@@ -62,7 +62,7 @@ export function FilterControls({
         <select
           value={date}
           onChange={(e) => onDateChange(e.target.value)}
-          className="flex-1 min-w-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs"
+          className="flex-1 min-w-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
           {dates.length === 0 ? (
             <option value="">日付なし</option>
@@ -77,11 +77,11 @@ export function FilterControls({
       </div>
 
       {/* 2行目: カテゴリ + 配信者 + 並び替え */}
-      <div className="flex gap-1">
+      <div className="flex gap-2">
         <select
           value={category}
           onChange={(e) => onCategoryChange(e.target.value)}
-          className="flex-1 min-w-0 px-1 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs"
+          className="flex-1 min-w-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
           <option value="">全カテゴリ</option>
           {Object.entries(CATEGORIES).map(([id, name]) => (
@@ -94,7 +94,7 @@ export function FilterControls({
         <select
           value={developerType}
           onChange={(e) => onDeveloperTypeChange(e.target.value as DeveloperType)}
-          className="flex-shrink-0 px-1 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs"
+          className="flex-shrink-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
           <option value="all">全て</option>
           <option value="company">企業</option>
@@ -107,7 +107,7 @@ export function FilterControls({
             const [field, order] = e.target.value.split("-") as [SortField, SortOrder];
             onSortChange(field, order);
           }}
-          className="flex-shrink-0 px-1 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs"
+          className="flex-shrink-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
           <option value="rank-asc">順位↑</option>
           <option value="rank-desc">順位↓</option>

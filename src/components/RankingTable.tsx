@@ -45,17 +45,17 @@ export function RankingTable({ entries, isLoading }: RankingTableProps) {
   }
 
   return (
-    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+    <div className="divide-y divide-gray-200 dark:divide-gray-700 overflow-hidden w-full">
       {entries.map((entry) => (
         <a
           key={entry.id}
           href={entry.appStoreUrl || "#"}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          className="flex items-center gap-2 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors overflow-hidden"
         >
           {/* 順位 */}
-          <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-bold text-sm">
+          <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 font-bold text-xs">
             {entry.rank}
           </div>
 
@@ -64,28 +64,28 @@ export function RankingTable({ entries, isLoading }: RankingTableProps) {
             <Image
               src={entry.appIconUrl}
               alt={entry.appName}
-              width={48}
-              height={48}
+              width={44}
+              height={44}
               className="rounded-xl flex-shrink-0"
             />
           ) : (
-            <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-xl flex-shrink-0" />
+            <div className="w-11 h-11 bg-gray-200 dark:bg-gray-700 rounded-xl flex-shrink-0" />
           )}
 
           {/* アプリ情報 */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 overflow-hidden">
             <div className="font-medium text-gray-900 dark:text-gray-100 truncate text-sm">
               {entry.appName}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
               {entry.developerName}
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex items-center gap-1 mt-1 overflow-hidden">
+              <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
                 {entry.primaryGenre || "-"}
               </span>
               <StarRating rating={entry.rating} />
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-400 flex-shrink-0">
                 ({formatNumber(entry.reviewCount)})
               </span>
             </div>
@@ -94,11 +94,11 @@ export function RankingTable({ entries, isLoading }: RankingTableProps) {
           {/* 価格 */}
           <div className="flex-shrink-0 text-right">
             {entry.price === 0 ? (
-              <span className="text-green-600 dark:text-green-400 text-sm font-medium">
+              <span className="text-green-600 dark:text-green-400 text-xs font-medium">
                 無料
               </span>
             ) : (
-              <span className="text-gray-700 dark:text-gray-300 text-sm">
+              <span className="text-gray-700 dark:text-gray-300 text-xs">
                 ¥{entry.price}
               </span>
             )}

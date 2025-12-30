@@ -145,7 +145,7 @@ export default function Home() {
           onDateChange={setDate}
         />
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden w-full">
           <RankingTable entries={filteredEntries} isLoading={isLoading} />
         </div>
 
