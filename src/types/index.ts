@@ -2,6 +2,38 @@ export type RankingType = "free" | "paid";
 
 export type SortField = "rank" | "rating" | "review_count";
 export type SortOrder = "asc" | "desc";
+export type DeveloperType = "all" | "company" | "individual";
+
+// 企業判定用のパターン
+const COMPANY_PATTERNS = [
+  // 日本語
+  /株式会社/,
+  /合同会社/,
+  /有限会社/,
+  /一般社団法人/,
+  /一般財団法人/,
+  /特定非営利活動法人/,
+  /NPO法人/,
+  // 英語
+  /\bInc\.?$/i,
+  /\bLLC\.?$/i,
+  /\bLtd\.?$/i,
+  /\bCorp\.?$/i,
+  /\bCorporation$/i,
+  /\bCompany$/i,
+  /\bCo\.?,?\s*(Ltd|Inc)?\.?$/i,
+  /\bGmbH$/i,
+  /\bS\.?A\.?$/,
+  /\bB\.?V\.?$/,
+  /\bPte\.?\s*Ltd\.?$/i,
+  /\bPLC$/i,
+  /\bLimited$/i,
+];
+
+export function isCompanyDeveloper(name: string | null): boolean {
+  if (!name) return false;
+  return COMPANY_PATTERNS.some(pattern => pattern.test(name));
+}
 
 export interface Genre {
   id: string;

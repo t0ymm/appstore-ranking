@@ -1,6 +1,6 @@
 "use client";
 
-import type { RankingType, SortField, SortOrder } from "@/types";
+import type { RankingType, SortField, SortOrder, DeveloperType } from "@/types";
 import { CATEGORIES } from "@/types";
 
 interface FilterControlsProps {
@@ -8,6 +8,8 @@ interface FilterControlsProps {
   onTypeChange: (type: RankingType) => void;
   category: string;
   onCategoryChange: (category: string) => void;
+  developerType: DeveloperType;
+  onDeveloperTypeChange: (developerType: DeveloperType) => void;
   sortBy: SortField;
   sortOrder: SortOrder;
   onSortChange: (sortBy: SortField, sortOrder: SortOrder) => void;
@@ -21,6 +23,8 @@ export function FilterControls({
   onTypeChange,
   category,
   onCategoryChange,
+  developerType,
+  onDeveloperTypeChange,
   sortBy,
   sortOrder,
   onSortChange,
@@ -72,14 +76,14 @@ export function FilterControls({
         </select>
       </div>
 
-      {/* 2行目: カテゴリ + 並び替え */}
+      {/* 2行目: カテゴリ + 配信者 + 並び替え */}
       <div className="flex gap-2">
         <select
           value={category}
           onChange={(e) => onCategoryChange(e.target.value)}
-          className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+          className="flex-1 min-w-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
-          <option value="">すべて</option>
+          <option value="">全カテゴリ</option>
           {Object.entries(CATEGORIES).map(([id, name]) => (
             <option key={id} value={id}>
               {name}
@@ -88,12 +92,22 @@ export function FilterControls({
         </select>
 
         <select
+          value={developerType}
+          onChange={(e) => onDeveloperTypeChange(e.target.value as DeveloperType)}
+          className="flex-shrink-0 w-20 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+        >
+          <option value="all">全て</option>
+          <option value="company">企業</option>
+          <option value="individual">個人</option>
+        </select>
+
+        <select
           value={`${sortBy}-${sortOrder}`}
           onChange={(e) => {
             const [field, order] = e.target.value.split("-") as [SortField, SortOrder];
             onSortChange(field, order);
           }}
-          className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+          className="flex-shrink-0 w-24 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
           <option value="rank-asc">順位↑</option>
           <option value="rank-desc">順位↓</option>

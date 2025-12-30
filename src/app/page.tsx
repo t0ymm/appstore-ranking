@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { RankingTable } from "@/components/RankingTable";
 import { FilterControls } from "@/components/FilterControls";
-import type { RankingItem, RankingType, SortField, SortOrder } from "@/types";
+import type { RankingItem, RankingType, SortField, SortOrder, DeveloperType } from "@/types";
+import { isCompanyDeveloper } from "@/types";
 
 export default function Home() {
   const [entries, setEntries] = useState<RankingItem[]>([]);
@@ -12,6 +13,7 @@ export default function Home() {
   const [isFetching, setIsFetching] = useState(false);
   const [type, setType] = useState<RankingType>("free");
   const [category, setCategory] = useState("");
+  const [developerType, setDeveloperType] = useState<DeveloperType>("all");
   const [sortBy, setSortBy] = useState<SortField>("rank");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [date, setDate] = useState("");
@@ -98,6 +100,13 @@ export default function Home() {
     setSortOrder(newSortOrder);
   };
 
+  // 配信者タイプでフィルタリング
+  const filteredEntries = entries.filter((entry) => {
+    if (developerType === "all") return true;
+    const isCompany = isCompanyDeveloper(entry.developerName);
+    return developerType === "company" ? isCompany : !isCompany;
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <header className="bg-white dark:bg-gray-800 shadow-sm">
@@ -126,6 +135,8 @@ export default function Home() {
           onTypeChange={setType}
           category={category}
           onCategoryChange={setCategory}
+          developerType={developerType}
+          onDeveloperTypeChange={setDeveloperType}
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSortChange={handleSortChange}
@@ -135,12 +146,12 @@ export default function Home() {
         />
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <RankingTable entries={entries} isLoading={isLoading} />
+          <RankingTable entries={filteredEntries} isLoading={isLoading} />
         </div>
 
-        {!isLoading && entries.length > 0 && (
+        {!isLoading && filteredEntries.length > 0 && (
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400 text-right">
-            {entries.length} 件のアプリ
+            {filteredEntries.length} 件のアプリ
           </div>
         )}
       </main>
