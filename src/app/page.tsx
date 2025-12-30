@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { RankingTable } from "@/components/RankingTable";
 import { FilterControls } from "@/components/FilterControls";
 import type { RankingItem, RankingType, SortField, SortOrder } from "@/types";
@@ -98,27 +99,17 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
       <header className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              App Store ランキングチェッカー
-            </h1>
-            <button
-              onClick={handleFetchData}
-              disabled={isFetching}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-            >
-              {isFetching ? (
-                <>
-                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
-                  取得中...
-                </>
-              ) : (
-                "データ取得"
-              )}
-            </button>
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center items-center">
+            <Image
+              src="/logo.png"
+              alt="App Store ランキングチェッカー"
+              width={200}
+              height={133}
+              priority
+            />
           </div>
         </div>
       </header>
@@ -153,6 +144,16 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      <footer className="mt-auto py-6 text-center text-sm text-gray-400 dark:text-gray-500">
+        <button
+          onClick={handleFetchData}
+          disabled={isFetching}
+          className="hover:text-gray-600 dark:hover:text-gray-300 disabled:cursor-not-allowed transition-colors"
+        >
+          {isFetching ? "取得中..." : "データを更新"}
+        </button>
+      </footer>
     </div>
   );
 }
