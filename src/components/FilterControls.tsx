@@ -33,7 +33,7 @@ export function FilterControls({
   onDateChange,
 }: FilterControlsProps) {
   return (
-    <div className="space-y-3 mb-6">
+    <div className="space-y-3 mb-6 w-full max-w-full">
       {/* 1行目: 無料/有料 + 日付 */}
       <div className="flex gap-2">
         <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0">
@@ -77,11 +77,11 @@ export function FilterControls({
       </div>
 
       {/* 2行目: カテゴリ + 配信者 + 並び替え */}
-      <div className="flex gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <select
           value={category}
           onChange={(e) => onCategoryChange(e.target.value)}
-          className="flex-1 min-w-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+          className="w-full px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm truncate"
         >
           <option value="">全カテゴリ</option>
           {Object.entries(CATEGORIES).map(([id, name]) => (
@@ -94,7 +94,7 @@ export function FilterControls({
         <select
           value={developerType}
           onChange={(e) => onDeveloperTypeChange(e.target.value as DeveloperType)}
-          className="flex-shrink-0 w-20 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+          className="w-full px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
           <option value="all">全て</option>
           <option value="company">企業</option>
@@ -107,7 +107,7 @@ export function FilterControls({
             const [field, order] = e.target.value.split("-") as [SortField, SortOrder];
             onSortChange(field, order);
           }}
-          className="flex-shrink-0 w-24 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+          className="w-full px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
           <option value="rank-asc">順位↑</option>
           <option value="rank-desc">順位↓</option>
