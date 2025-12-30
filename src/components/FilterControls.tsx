@@ -76,29 +76,30 @@ export function FilterControls({
         </select>
       </div>
 
-      {/* 2行目: カテゴリ + 配信者 + 並び替え */}
-      <div className="flex gap-2">
-        <select
-          value={category}
-          onChange={(e) => onCategoryChange(e.target.value)}
-          className="flex-1 min-w-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
-        >
-          <option value="">全カテゴリ</option>
-          {Object.entries(CATEGORIES).map(([id, name]) => (
-            <option key={id} value={id}>
-              {name}
-            </option>
-          ))}
-        </select>
+      {/* 2行目: カテゴリ */}
+      <select
+        value={category}
+        onChange={(e) => onCategoryChange(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+      >
+        <option value="">全カテゴリ</option>
+        {Object.entries(CATEGORIES).map(([id, name]) => (
+          <option key={id} value={id}>
+            {name}
+          </option>
+        ))}
+      </select>
 
+      {/* 3行目: 配信者 + 並び替え */}
+      <div className="flex gap-2">
         <select
           value={developerType}
           onChange={(e) => onDeveloperTypeChange(e.target.value as DeveloperType)}
-          className="flex-shrink-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+          className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
-          <option value="all">全て</option>
-          <option value="company">企業</option>
-          <option value="individual">個人</option>
+          <option value="all">配信者: 全て</option>
+          <option value="company">配信者: 企業</option>
+          <option value="individual">配信者: 個人</option>
         </select>
 
         <select
@@ -107,7 +108,7 @@ export function FilterControls({
             const [field, order] = e.target.value.split("-") as [SortField, SortOrder];
             onSortChange(field, order);
           }}
-          className="flex-shrink-0 px-2 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
+          className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm"
         >
           <option value="rank-asc">順位↑</option>
           <option value="rank-desc">順位↓</option>
