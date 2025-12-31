@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { fetchAllRankings } from "@/lib/appstore/fetcher";
 import { format } from "date-fns";
 
@@ -8,6 +9,9 @@ export async function POST(request: NextRequest) {
     const date = body.date || format(new Date(), "yyyy-MM-dd");
 
     await fetchAllRankings(date);
+
+    // 新しいデータ取得後、キャッシュを即座に無効化
+    revalidateTag("rankings", { expire: 0 });
 
     return NextResponse.json({
       success: true,

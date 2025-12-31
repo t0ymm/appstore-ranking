@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase/client";
 import type { RankingType, SortField, SortOrder, Genre } from "@/types";
 
@@ -29,34 +30,34 @@ interface SnapshotDate {
   fetch_date: string;
 }
 
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const date = searchParams.get("date");
-    const type = (searchParams.get("type") || "free") as RankingType;
-    const category = searchParams.get("category");
-    const sortBy = (searchParams.get("sortBy") || "rank") as SortField;
-    const sortOrder = (searchParams.get("sortOrder") || "asc") as SortOrder;
-
+// キャッシュされた最新日付取得関数
+const getLatestDate = unstable_cache(
+  async (type: RankingType) => {
     const supabase = createServerClient();
+    const { data: snapshots } = await supabase
+      .from("ranking_snapshots")
+      .select("fetch_date")
+      .eq("ranking_type", type)
+      .order("fetch_date", { ascending: false })
+      .limit(1)
+      .returns<SnapshotDate[]>();
 
-    let targetDate = date;
+    return snapshots?.[0]?.fetch_date || null;
+  },
+  ["latest-date"],
+  { revalidate: 3600, tags: ["rankings"] } // 1時間キャッシュ
+);
 
-    if (!targetDate) {
-      const { data: snapshots } = await supabase
-        .from("ranking_snapshots")
-        .select("fetch_date")
-        .eq("ranking_type", type)
-        .order("fetch_date", { ascending: false })
-        .limit(1)
-        .returns<SnapshotDate[]>();
-
-      if (snapshots && snapshots.length > 0) {
-        targetDate = snapshots[0].fetch_date;
-      } else {
-        return NextResponse.json({ entries: [], date: null });
-      }
-    }
+// キャッシュされたランキング取得関数
+const getRankings = unstable_cache(
+  async (
+    type: RankingType,
+    targetDate: string,
+    category: string | null,
+    sortBy: SortField,
+    sortOrder: SortOrder
+  ) => {
+    const supabase = createServerClient();
 
     let query = supabase
       .from("ranking_entries")
@@ -84,8 +85,33 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query.returns<RankingEntryWithSnapshot[]>();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new Error(error.message);
     }
+
+    return data;
+  },
+  ["rankings"],
+  { revalidate: 3600, tags: ["rankings"] } // 1時間キャッシュ
+);
+
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const date = searchParams.get("date");
+    const type = (searchParams.get("type") || "free") as RankingType;
+    const category = searchParams.get("category");
+    const sortBy = (searchParams.get("sortBy") || "rank") as SortField;
+    const sortOrder = (searchParams.get("sortOrder") || "asc") as SortOrder;
+
+    // 日付が指定されていない場合は最新を取得（キャッシュ済み）
+    const targetDate = date || (await getLatestDate(type));
+
+    if (!targetDate) {
+      return NextResponse.json({ entries: [], date: null });
+    }
+
+    // ランキングデータ取得（キャッシュ済み）
+    const data = await getRankings(type, targetDate, category, sortBy, sortOrder);
 
     const entries = data?.map((entry) => ({
       id: entry.id,
@@ -106,7 +132,13 @@ export async function GET(request: NextRequest) {
 
     const fetchDate = data?.[0]?.ranking_snapshots?.fetch_date || null;
 
-    return NextResponse.json({ entries, date: fetchDate });
+    // CDNキャッシュ用のCache-Controlヘッダーを設定
+    const response = NextResponse.json({ entries, date: fetchDate });
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=3600, stale-while-revalidate=86400"
+    );
+    return response;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message, entries: [], date: null }, { status: 500 });
